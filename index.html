@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mitosis Puzzle</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #2b1055, #7597de);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+    }
+
+    .preview {
+      width: 200px;
+      margin-bottom: 15px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .controls span {
+      font-size: 18px;
+    }
+
+    .controls button {
+      background-color: #fff;
+      color: #2b1055;
+      border: none;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .controls button:hover {
+      background-color: #ddd;
+    }
+
+    .puzzle-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      width: 90vw;
+      max-width: 400px;
+      aspect-ratio: 1 / 1;
+      gap: 2px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    }
+
+    .tile {
+      background-image: url('crestal1.png');
+      background-size: 400% 400%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .empty {
+      background: transparent;
+      cursor: default;
+    }
+
+    @media (max-width: 500px) {
+      .preview {
+        width: 150px;
+      }
+
+      .controls span {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <img src="crestal1.png" alt="Puzzle Preview" class="preview"/>
+
+  <div class="controls">
+    <span id="timer">Time: 0s</span>
+    <button onclick="restartPuzzle()">Restart</button>
+  </div>
+
+  <div class="puzzle-container" id="puzzle"></div>
+
+  <script>
+    const container = document.getElementById('puzzle');
+    const timerDisplay = document.getElementById('timer');
+    const size = 4;
+    const totalTiles = size * size;
+    let tiles = [];
+    let timer = null;
+    let seconds = 0;
+
+    function startTimer() {
+      clearInterval(timer);
+      seconds = 0;
+      timerDisplay.textContent = "Time: 0s";
+      timer = setInterval(() => {
+        seconds++;
+        timerDisplay.textContent = `Time: ${seconds}s`;
+      }, 1000);
+    }
+
+    function createTiles() {
+      tiles = [];
+      for (let i = 0; i < totalTiles; i++) {
+        const tile = document.createElement('div');
+        tile.classList.add('tile');
+        tile.dataset.index = i;
+
+        const row = Math.floor(i / size);
+        const col = i % size;
+        tile.style.backgroundPosition = `${(col * 100) / (size - 1)}% ${(row * 100) / (size - 1)}%`;
+
+        tiles.push(tile);
+      }
+
+      tiles[0].classList.add('empty'); // First tile is empty
+    }
+
+    function shuffleTiles() {
+      const movable = tiles.slice(1);
+      for (let i = movable.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [movable[i], movable[j]] = [movable[j], movable[i]];
+      }
+      tiles = [tiles[0], ...movable];
+    }
+
+    function render() {
+      container.innerHTML = '';
+      tiles.forEach((tile, i) => {
+        tile.style.order = i;
+        container.appendChild(tile);
+      });
+    }
+
+    function getEmptyIndex() {
+      return tiles.findIndex(tile => tile.classList.contains('empty'));
+    }
+
+    function canMove(index) {
+      const emptyIndex = getEmptyIndex();
+      const x1 = index % size, y1 = Math.floor(index / size);
+      const x2 = emptyIndex % size, y2 = Math.floor(emptyIndex / size);
+      return (Math.abs(x1 - x2) + Math.abs(y1 - y2)) === 1;
+    }
+
+    function moveTile(index) {
+      const emptyIndex = getEmptyIndex();
+      [tiles[index], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[index]];
+      render();
+    }
+
+    container.addEventListener('click', e => {
+      const tile = e.target;
+      const index = tiles.indexOf(tile);
+      if (index !== -1 && canMove(index)) {
+        moveTile(index);
+      }
+    });
+
+    function restartPuzzle() {
+      createTiles();
+      shuffleTiles();
+      render();
+      startTimer();
+    }
+
+    restartPuzzle();
+  </script>
+
+</body>
+</html>
